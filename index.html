@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galería Animada</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Fondo de video */
+    #bgVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 2s ease-in;
+      z-index: -1;
+      /* detrás de todo */
+    }
+
+    #gallery {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    img {
+      position: absolute;
+      object-fit: cover;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      transform: translate(-50%, -50%);
+      border-radius: 20px;
+      /* 🔹 Bordes redondeados */
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+      /* 🔹 Sombra difuminada */
+      backdrop-filter: blur(4px);
+      /* 🔹 Difuminado sutil del fondo */
+      transition:
+        opacity 2s ease,
+        width 2s ease,
+        height 2s ease,
+        left 2s ease,
+        top 2s ease,
+        box-shadow 2s ease;
+    }
+
+
+    .controls {
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
+      text-align: center;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 24px;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 🎥 Video de fondo -->
+  <video id="bgVideo" autoplay muted playsinline>
+    <source src="media/video1.mp4" type="video/mp4">
+    Tu navegador no soporta video HTML5.
+  </video>
+
+  <div id="gallery"></div>
+
+  <div class="controls">
+    <button id="prevBtn">&lt;</button>
+    <button id="nextBtn">&gt;</button>
+  </div>
+
+  <script>
+    // --- Fade-in del video y carga inicial ---
+    window.addEventListener("load", () => {
+      const video = document.getElementById("bgVideo");
+      video.style.opacity = 1;
+
+      // --- Fade-out justo antes de que el video termine ---
+      video.addEventListener("timeupdate", () => {
+        const remaining = video.duration - video.currentTime;
+        if (remaining < 2 && video.style.opacity === "1") {
+          video.style.transition = "opacity 2s ease-out";
+          video.style.opacity = 0;
+        }
+      });
+
+      // --- Reiniciar video con fade-in ---
+      video.addEventListener("ended", () => {
+        video.currentTime = 0;
+        video.play();
+        video.style.transition = "opacity 2s ease-in";
+        video.style.opacity = 1;
+      });
+
+      // Cargar primer grupo al inicio
+      currentGroup = 0;
+      showGroup(currentGroup);
+    });
+
+    // --- Grupos de imágenes ---
+    const grupos = [
+      
+      //SECCION EN BLANCO ----------------------------------------------
+      [
+        { url: "media/10x10_Alpha.png", x: 20, y: 30, w: 1, h: 1 }//Imagen transparente
+      ]
+      , //SECCION AGRADECIMIENTOS ----------------------------------------------
+      [
+        { url: "media/AGRADECIMIENTOS/1.jpg", x: 25, y: 40, scale: 80 },
+        { url: "media/AGRADECIMIENTOS/2.jpg", x: 50, y: 60, scale: 50 },
+        { url: "media/AGRADECIMIENTOS/3.jpg", x: 80, y: 50, scale: 60 }
+      ]
+      
+      , //SECCION ALEJO ----------------------------------------------
+      [
+        { url: "media/ALEJO/7.jpg", x: 20, y: 30, scale: 20 },        
+        { url: "media/ALEJO/2.jpg", x: 67, y: 30, scale: 30 },
+        { url: "media/ALEJO/8.jpg", x: 22, y: 70, scale: 13 }
+      ]
+      ,
+      [  
+        { url: "media/ALEJO/6.jpg", x: 45, y: 50, scale: 50 },
+        { url: "media/ALEJO/4.jpg", x: 68, y: 65, scale: 50 },
+        { url: "media/ALEJO/5.jpg", x: 85, y: 60, scale: 35 }
+      ]
+      ,
+      [
+        { url: "media/ALEJO/10.jpg", x: 51, y: 70, scale: 20 },
+        { url: "media/ALEJO/11.jpg", x: 73, y: 62, scale: 15 },
+        { url: "media/ALEJO/12.jpg", x: 35, y: 28, scale: 18 }
+      ]
+      ,
+      [  
+        { url: "media/ALEJO/13.jpg", x: 30, y: 60, scale: 15 },
+        { url: "media/ALEJO/9.jpg", x: 64, y: 28, scale: 13 },//superior derecha
+        { url: "media/ALEJO/1.jpg", x: 16, y: 50, scale: 50 } //morada izquierda            
+      ]
+      , //SECCION ALICIA ----------------------------------------------
+      [
+        { url: "media/ALICIA/1.jpg", x: 23, y: 35, scale: 15 },
+        { url: "media/ALICIA/4.jpg", x: 45, y: 50, scale: 20 },
+        { url: "media/ALICIA/2.jpg", x: 68, y: 30, scale: 17 }
+      ]
+      ,
+      [
+        { url: "media/ALICIA/3.jpg", x: 22, y: 70, scale: 20 },
+        { url: "media/ALICIA/7.jpg", x: 68, y: 80, scale: 30 }
+      ]
+      ,
+      [
+        { url: "media/ALICIA/5.jpg", x: 45, y: 50, scale: 80 },
+        { url: "media/ALICIA/6.jpg", x: 18, y: 50, scale: 40 },
+        { url: "media/ALICIA/8.jpg", x: 77, y: 50, scale: 40 }
+      ]
+      ,
+      [  
+        { url: "media/ALICIA/9.jpg", x: 20, y: 30, scale: 40 },
+        { url: "media/ALICIA/10.jpg", x: 60, y: 50, scale: 40 },
+        { url: "media/ALICIA/11.jpg", x: 70, y: 65, scale: 40 }
+      ]
+      ,
+      [
+        { url: "media/ALICIA/12.jpg", x: 20, y: 30, scale: 40 },
+        { url: "media/ALICIA/13.jpg", x: 60, y: 50, scale: 40 },
+        { url: "media/ALICIA/14.jpg", x: 70, y: 30, scale: 40 }
+      ]
+      , //SECCION AMIGOS ----------------------------------------------
+      [
+        { url: "media/AMIGOS/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [        
+        { url: "media/AMIGOS/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/AMIGOS/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/15.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/16.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/18.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/20.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/21.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/AMIGOS/23.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/24.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/25.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/26.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/AMIGOS/27.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/AMIGOS/28.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/AMIGOS/29.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      , //SECCION BRIGITTE ----------------------------------------------
+      [
+        { url: "media/BRIGITTE/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/BRIGITTE/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/15.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/16.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/19.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/20.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/21.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/23.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/24.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/25.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/26.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/27.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/28.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/29.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/BRIGITTE/30.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/BRIGITTE/31.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/32.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/33.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/34.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/35.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/36.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/37.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/38.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/39.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/40.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/41.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/42.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/43.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/BRIGITTE/44.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/45.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/46.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/47.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/48.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/49.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/50.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/51.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/52.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/BRIGITTE/53.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/BRIGITTE/54.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/BRIGITTE/55.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,//SECCION FAMILIA ----------------------------------------------
+      [
+        { url: "media/FAMILIA/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/6.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/8.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/9.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/FAMILIA/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/16.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/20.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/21.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/23.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/24.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/25.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/26.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/27.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/28.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/29.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/FAMILIA/30.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/31.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/32.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/33.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/34.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/35.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/36.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/37.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/38.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIA/39.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/40.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIA/41.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIA/42.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      , //SECCION FAMILIARES ----------------------------------------------
+      [
+        { url: "media/FAMILIARES_SANTOS/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIARES_SANTOS/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIARES_SANTOS/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIARES_SANTOS/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/FAMILIARES_SANTOS/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/FAMILIARES_SANTOS/15.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      , //SECCION JAZZ ----------------------------------------------
+      [
+        { url: "media/JAZZ/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JAZZ/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JAZZ/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JAZZ/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JAZZ/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JAZZ/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JAZZ/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JAZZ/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JAZZ/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JAZZ/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/15.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JAZZ/16.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JAZZ/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JAZZ/19.png", x: 60, y: 50, scale: 50 }
+      ]
+      , //SECCION JUNTOS ----------------------------------------------
+      [
+        { url: "media/JUNTOS/1.jpeg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/12.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/16.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/20.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/21.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/23.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/24.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/25.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/26.jpeg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/27.jpeg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/28.jpeg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/29.jpeg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/30.jpeg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/31.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/32.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/33.jpeg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/34.jpeg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/35.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/36.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/37.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/38.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/39.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/40.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/41.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/42.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/43.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/44.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/45.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/46.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/47.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/48.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/49.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/50.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/51.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/52.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/53.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/54.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/55.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/56.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/57.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/58.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/59.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/60.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/61.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/62.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/63.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/64.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/65.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/66.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/67.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/68.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/69.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/70.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/JUNTOS/71.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/72.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/73.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/74.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/75.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/76.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/77.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/78.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/79.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/80.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/81.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/82.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/JUNTOS/83.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/84.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/85.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/JUNTOS/86.jpeg", x: 60, y: 50, scale: 50 },
+        { url: "media/JUNTOS/87.jpeg", x: 20, y: 30, scale: 50 }
+      ]
+      , //SECCION KENT ----------------------------------------------
+      [
+        { url: "media/KENT/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/12.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/13.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/16.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/20.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/KENT/21.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/KENT/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/KENT/23.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      , //SECCION MAMA ----------------------------------------------
+      [
+        { url: "media/MAMA/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/6.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/7.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/9.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/11.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/12.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/MAMA/14.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/16.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/17.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/20.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/21.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/22.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/23.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/24.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/25.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/26.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/27.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/28.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/29.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/30.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/31.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/MAMA/32.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/MAMA/33.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/MAMA/34.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      , //SECCION NILSON ----------------------------------------------
+      [
+        { url: "media/NILSON/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/NILSON/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/NILSON/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/9.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/NILSON/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/12.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/13.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/NILSON/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/16.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/NILSON/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/18.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/NILSON/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/NILSON/20.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      , //SECCION PAPA ----------------------------------------------
+      [
+        { url: "media/PAPA/1.png", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/PAPA/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/6.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/PAPA/7.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/9.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/10.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/PAPA/11.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/12.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/13.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/PAPA/14.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/PAPA/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/16.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/PAPA/17.png", x: 60, y: 50, scale: 50 },
+        { url: "media/PAPA/18.jpeg", x: 20, y: 30, scale: 50 }
+      ]
+      , //SECCION SANTOS ----------------------------------------------
+      [
+        { url: "media/SANTOS/1.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/2.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/3.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/4.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/5.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/6.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/7.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/8.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/9.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/10.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/11.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/12.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/13.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/SANTOS/14.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/15.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/16.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/17.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/18.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/19.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/20.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/21.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/22.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/23.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/24.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/25.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/26.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/SANTOS/27.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/28.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/29.jpg", x: 40, y: 70, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/30.jpg", x: 40, y: 70, scale: 50 },
+        { url: "media/SANTOS/31.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/32.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/33.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/34.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/35.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/36.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/37.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/38.jpg", x: 60, y: 50, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/39.jpg", x: 20, y: 30, scale: 50 },
+        { url: "media/SANTOS/40.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/41.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      ,
+      [
+        { url: "media/SANTOS/42.jpg", x: 60, y: 50, scale: 50 },
+        { url: "media/SANTOS/43.jpg", x: 20, y: 30, scale: 50 }
+      ]
+      , //SECCION SUEÑOS ----------------------------------------------
+      [
+        { url: "media/SUEÑOS/1.jpg", x: 20, y: 30, scale:20 }
+      ]
+      , //SECCION FINAL EN BLANCO ----------------------------------------------
+      
+      [
+        { url: "media/10x10_Alpha.png", x: 20, y: 30, w: 1, h: 1 }//Imagen transparente
+      ]
+    ];
+
+
+    let currentGroup = -1;
+    const gallery = document.getElementById('gallery');
+
+    // --- Función para mostrar un grupo ---
+    function showGroup(index) {
+      // --- Animar salida del grupo anterior ---
+      const oldImages = gallery.querySelectorAll("img");
+      oldImages.forEach((img, i) => {
+        setTimeout(() => {
+          img.style.opacity = 0;
+          img.style.width = "1px";
+          img.style.height = "1px";
+          img.style.left = `${window.innerWidth / 2}px`;
+          img.style.top = `${window.innerHeight / 2}px`;
+        }, i * 100);
+      });
+
+      // Esperar a que termine la animación de salida antes de limpiar
+      setTimeout(() => {
+        gallery.innerHTML = ""; // limpiar anterior
+        if (index < 0 || index >= grupos.length) return;
+
+        const group = grupos[index];
+        group.forEach((imgData, i) => {
+          const img = document.createElement("img");
+          img.src = imgData.url;
+          gallery.appendChild(img);
+
+          // Estado inicial (centro, 1px, invisible)
+          const cx = window.innerWidth / 2;
+          const cy = window.innerHeight / 2;
+          img.style.left = `${cx}px`;
+          img.style.top = `${cy}px`;
+
+          // Aplicar escala cuando la imagen cargue
+              img.onload = () => {
+                const scale = imgData.scale ? imgData.scale / 100 : 1;
+                img.style.width = img.naturalWidth * scale + "px";
+                img.style.height = img.naturalHeight * scale + "px";
+              };
+
+          // Animar entrada
+          setTimeout(() => {
+            img.style.left = `${(imgData.x / 100) * window.innerWidth}px`;
+            img.style.top = `${(imgData.y / 100) * window.innerHeight}px`;
+            
+            img.style.opacity = 1;
+          }, 50 + i * 150);
+        });
+      }, 1000); // espera 1s para que termine el fade-out
+    }
+
+    // --- Botones de navegación ---
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      if (currentGroup > 0) {
+        currentGroup--;
+        showGroup(currentGroup);
+      }
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      if (currentGroup < grupos.length - 1) {
+        currentGroup++;
+        showGroup(currentGroup);
+      }
+    });
+
+    // --- Navegación por clic en lados ---
+    gallery.addEventListener("click", (e) => {
+      const mitad = window.innerWidth / 2;
+      if (e.clientX > mitad && currentGroup < grupos.length - 1) {
+        currentGroup++;
+        showGroup(currentGroup);
+      } else if (e.clientX < mitad && currentGroup > 0) {
+        currentGroup--;
+        showGroup(currentGroup);
+      }
+    });
+  </script>
+</body>
+
+</html>
